@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zcoder-yyf 的技术博客 & OJ 终极版</title>
+    <title>Zcoder-yyf 的技术博客 & OJ</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* 动态二次元背景层：每次刷新随机显示，加入全屏遮罩防刺眼 */
+        /* 动态二次元背景层：国内极其稳定的二次元API，每次刷新随机显示，加入全屏遮罩防刺眼 */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             display: flex; 
             color: #333; 
             background: linear-gradient(rgba(244, 245, 247, 0.85), rgba(244, 245, 247, 0.85)), 
-                        url('https://api.moedog.org/moe/img?_t=' + Math.random()) no-repeat center center fixed;
+                        url('https://api.ixiaowai.cn/api/api.php') no-repeat center center fixed;
             background-size: cover;
         }
         
@@ -64,7 +64,7 @@
         
         .code-area { flex: 1; display: flex; flex-direction: column; position: relative; }
         
-        /* AcWing 专属蓝黑编辑器字体与配色方案 */
+        /* AcWing 专属蓝黑编辑器字体与配色方案 (18px 大字体) */
         .cm-s-acwing-dark.CodeMirror { background: #0d1117; color: #c9d1d9; font-size: 18px !important; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.6; height: 100%; }
         .cm-s-acwing-dark .CodeMirror-gutters { background: #0d1117; border-right: 1px solid #30363d; }
         .cm-s-acwing-dark .CodeMirror-linenumber { color: #484f58; }
@@ -82,13 +82,15 @@
 
         /* 底部操作栏 */
         .action-bar { display: flex; padding: 12px 20px; background: #161b22; border-top: 1px solid #30363d; gap: 15px; }
-        .btn { border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .btn { border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; flex: 1; }
         .btn-submit { background: #238636; color: #fff; }
         .btn-submit:hover { background: #2ea043; }
         .btn-solution { background: #1f6feb; color: #fff; }
         .btn-solution:hover { background: #388bfd; }
-        .btn-back { background: #6e7681; color: #fff; display: none; } /* 默认隐藏的返回编辑按键 */
-        .btn-back:hover { background: #848d97; }
+        
+        /* 新增：返回编辑按键（默认隐藏） */
+        .btn-back { background: #6e7681; color: #fff; display: none; } 
+        .btn-back:hover { background: #8b949e; }
 
         /* 后端不会提示框 */
         .toast { display: none; position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #1f6feb; color: #fff; padding: 15px 40px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 2000; font-size: 18px; text-align: center; }
@@ -137,6 +139,7 @@
                     <div class="action-bar">
                         <button class="btn btn-solution" id="sol-btn" onclick="toggleSolution()">查看题解</button>
                         <button class="btn btn-back" id="back-btn" onclick="backToEdit()">返回继续编辑</button>
+                        
                         <button class="btn btn-submit" onclick="submitCode()">提交运行</button>
                     </div>
                 </div>
@@ -149,15 +152,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/closebrackets.min.js"></script>
 
     <script>
-        // 初始化 CodeMirror 编辑器
+        // 修复关键 Bug：获取所有的选项卡与面板变量（之前漏了这一行导致 JS 报错卡死）
+        const menuItems = document.querySelectorAll('.menu-item');
+        const panels = document.querySelectorAll('.page-panel');
+
+        // 初始化专业代码高亮编辑器
         let editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
             mode: "text/x-c++src",
-            theme: "acwing-dark", 
+            theme: "acwing-dark", // 纯正蓝黑配色
             lineNumbers: true,
             indentUnit: 4,
             tabSize: 4,
             lineWrapping: true,
-            autoCloseBrackets: true, // 开启大括号、小括号自动对齐补全
+            autoCloseBrackets: true, // 开启括号自动对齐补全功能
             extraKeys: {
                 "Tab": function(cm) {
                     var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
@@ -166,11 +173,11 @@
             }
         });
 
-        // 缓存未提交的用户草稿，用于返回编辑时复原
+        // 缓存用户手写的草稿代码
         let userDraft = "";
 
         // ==========================================
-        // 💥 38 门独立课源码大映射
+        // 💥 无情罗列：全量核心题目源码字典
         // ==========================================
         const allProblems = [
             { id: "qs", cat: "基础算法", name: "快速排序", code: `// 快速排序\n#include <iostream> \nusing namespace std; \nconst int N = 1e6 + 10;\nint q[N];\nvoid quick_sort(int q[],int l,int r)\n{\n\tif(l >= r) return;\n\tint x = q[(l + r + 1) / 2],i = l - 1,j = r + 1;\n\twhile(i < j)\n\t{\n\t\tdo i++;while(q[i] < x);\n\t\tdo j--;while(q[j] > x);\n\t\t\n\t\tif(i < j) swap(q[i],q[j]);\n\t}\n\tquick_sort(q,l,i-1),quick_sort(q,i,r);\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> q[i];\n\tquick_sort(q,0,n-1);\n\tfor(int i=0;i<n;i++) cout << q[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
@@ -182,15 +189,15 @@
             { id: "hp_div", cat: "基础算法", name: "高精度除法", code: `// 高精度除法\n#include <iostream> \n#include <vector>\n#include <algorithm>\nusing namespace std;\nvector<int> div(vector<int> &A, int b, int &r)\n{\n\tvector<int> C; r = 0;\n\tfor(int i=A.size() - 1;i >= 0;i--) { r = r * 10 + A[i]; C.push_back(r / b); r %= b; }\n\treverse(C.begin(),C.end());\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}` },
             { id: "hp_sq", cat: "基础算法", name: "大数字平方差", code: `// 大数字平方差\n#include <iostream> \n#include <vector> \nusing namespace std;\nvoid solve()\n{\n\tstring s1,s2; cin >> s1 >> s2;\n\tauto add_part = add(A,B);\n\tauto sub_part = cmp(A,B) ? sub(A,B) : sub(B,A);\n\tauto res = mul(add_part,sub_part);\n\tif(!cmp(A,B) && !(res.size() == 1 && res[0] == 0)) cout << '-';\n}` },
             { id: "pf1", cat: "基础算法", name: "一维前缀和", code: `// 一维前缀和\nfor(int i=1;i<=n;i++) q[i] += q[i-1];` },
-            { id: "pf2", cat: "基础算法", name: "二维前缀和", code: `// 二极前缀和\ns[i][j] = s[i-1][j] + s[i][j-1] - s[i-1][j-1] + a[i][j];` },
+            { id: "pf2", cat: "基础算法", name: "二维前缀和", code: `// 二维前缀和\ns[i][j] = s[i-1][j] + s[i][j-1] - s[i-1][j-1] + a[i][j];` },
             { id: "df1", cat: "基础算法", name: "一维差分", code: `// 一维差分\nb[l] += c; b[r + 1] -= c;` },
             { id: "df2", cat: "基础算法", name: "二维差分", code: `// 二维差分公式插入\nvoid insert(int x1,int y1,int x2,int y2,int c) {\n\tb[x1][y1] += c; b[x2 + 1][y2 + 1] += c;\n\tb[x1][y2 + 1] -= c; b[x2 + 1][y1] -= c;\n}` },
             { id: "tp1", cat: "基础算法", name: "双指针(最长连续不重复子序列)", code: `while(s[a[i]] > 1) { s[a[j]]--; j++; }` },
-            { id: "tp2", cat: "基础算法", name: "双指针(数组元素目标和找下标)", code: `while(j >= 0 && a[i] + b[j] > x) j--;` },
+            { id: "tp2", cat: "基础算法", name: "双指针(数组元素目标和)", code: `while(j >= 0 && a[i] + b[j] > x) j--;` },
             { id: "tp3", cat: "基础算法", name: "双指针(判断子序列)", code: `while(i < n && j < m) { if(a[i] == b[j]) i++; j++; }` },
             { id: "tp4", cat: "基础算法", name: "双指针(区间合并)", code: `if(ed < seg.first) { res.push_back({st,ed}); st=seg.first; }` },
             { id: "lowbit", cat: "基础算法", name: "lowbit运算", code: `while(x) x -= x & -x, res++;` },
-            { id: "lsh", cat: "基础算法", name: "离散化(坐标去重映射)", code: `// 离散化映射分治查找\nint find(int x) {\n\tint l = -1,r = alls.size();\n\twhile(l + 1 != r) { int mid = l + r >> 1; if(alls[mid] < x) l = mid; else r = mid; }\n\treturn r + 1;\n}` },
+            { id: "lsh", cat: "基础算法", name: "离散化(坐标映射)", code: `// 离散化二分查找\nint find(int x) {\n\tint l = -1,r = alls.size();\n\twhile(l + 1 != r) { int mid = l + r >> 1; if(alls[mid] < x) l = mid; else r = mid; }\n\treturn r + 1;\n}` },
             { id: "ll1", cat: "数据结构", name: "单链表(数组模拟)", code: `void add_to_head(int x) { e[idx] = x; ne[idx] = head; head = idx++; }` },
             { id: "stk1", cat: "数据结构", name: "单调栈", code: `while(tt && stk[tt] >= x) tt --;\nif(tt) cout << stk[tt] << ' '; else cout << -1 << ' ';` },
             { id: "stk_que", cat: "数据结构", name: "单调栈理论分析", code: `// 弹出所有递增破坏项\nwhile (tt != -1 && a[q[tt]] >= a[i]) tt--;` },
@@ -211,7 +218,7 @@
             { id: "comb4", cat: "组合数学", name: "组合数4(勒让德定理)", code: `sum[i] = get(a,p) - get(b,p) - get(a-b,p);` }
         ];
 
-        // 渲染表格
+        // 渲染表格面板
         const container = document.getElementById('acwing-list-container');
         let currentProb = null;
 
@@ -237,7 +244,7 @@
                 <tr>
                     <td>${prob.cat}</td>
                     <td><span class="title-link" onclick="openOJ('${prob.id}')">${prob.name}</span></td>
-                    <td style="text-align: right; color:#8b949e; font-size:12px;">对答案</td>
+                    <td style="text-align: right; color:#8b949e; font-size:12px;">进入答题区</td>
                     <td style="text-align: center;" class="status-check">✔</td>
                 </tr>
             `;
@@ -246,7 +253,7 @@
         cardHtml += `</tbody></table></div>`;
         container.innerHTML = cardHtml;
 
-        // 菜单卡片切换控制
+        // 完美修复的菜单选项卡切换事件
         menuItems.forEach(item => {
             item.addEventListener('click', () => {
                 menuItems.forEach(i => i.classList.remove('active'));
@@ -256,7 +263,7 @@
             });
         });
 
-        // 打开弹窗
+        // 开启题目面板
         function openOJ(id) {
             currentProb = allProblems.find(p => p.id === id);
             if(!currentProb) return;
@@ -264,48 +271,49 @@
             document.getElementById('modal-title').innerText = currentProb.name;
             document.getElementById('oj-modal').style.display = "flex";
             
-            // 每次打开题目重置按钮状态
+            // 每次打开新的题，重置按钮显示状态
             document.getElementById('sol-btn').style.display = "block";
             document.getElementById('back-btn').style.display = "none";
             
             setTimeout(() => {
-                editor.setValue(""); 
+                editor.setValue(""); // 留给用户干干净净的草稿纸
                 editor.refresh();
                 editor.focus();
             }, 50);
         }
 
+        // 关闭面板
         function closeOJ() {
             document.getElementById('oj-modal').style.display = "none";
         }
 
-        // 点击【查看题解】切换逻辑
+        // 💥 新增逻辑：查看题解并切换返回按钮
         function toggleSolution() {
             if(!currentProb) return;
-            // 保存用户现有的草稿
+            // 1. 保存当前手写的草稿
             userDraft = editor.getValue();
-            // 写入正确答案并高亮
+            // 2. 贴上正确答案
             editor.setValue(currentProb.code);
             editor.refresh();
             
-            // 隐藏查看题解，展露返回继续编辑
+            // 3. 切换按钮状态：隐藏题解按钮，显示返回继续编辑
             document.getElementById('sol-btn').style.display = "none";
             document.getElementById('back-btn').style.display = "block";
         }
 
-        // 点击【返回继续编辑】
+        // 💥 新增逻辑：从答案切回草稿
         function backToEdit() {
-            // 恢复之前存下来的用户草稿
+            // 1. 恢复草稿
             editor.setValue(userDraft);
             editor.refresh();
             editor.focus();
             
-            // 按钮状态回切
+            // 2. 切换按钮状态
             document.getElementById('sol-btn').style.display = "block";
             document.getElementById('back-btn').style.display = "none";
         }
 
-        // 提交代码弹出提示
+        // 提交代码防呆弹窗
         function submitCode() {
             const toast = document.getElementById('oj-toast');
             toast.style.display = "block";
