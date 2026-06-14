@@ -87,25 +87,28 @@
         .cm-s-acwing-custom .CodeMirror-gutters { background: #f8f9fa; border-right: 1px solid #e0e0e0; }
         .cm-s-acwing-custom .CodeMirror-linenumber { color: #888888; }
         
-        /* 蓝色：关键字、类型、内建函数、数字（全部取消加粗，高度还原） */
+        /* 蓝色：关键字、类型、内建函数、数字 */
         .cm-s-acwing-custom .cm-keyword,
         .cm-s-acwing-custom .cm-type,
         .cm-s-acwing-custom .cm-builtin,
-        .cm-s-acwing-custom .cm-number { color: #0000ff; font-weight: normal; } 
+        .cm-s-acwing-custom .cm-number { color: #0000ff !important; font-weight: normal !important; } 
         
-        /* 核心修改：#include 这一行里，只有尖括号部分变为纯红色 */
-        .cm-s-acwing-custom .cm-meta { color: #000000; font-weight: normal; } /* 让 #include 归黑 */
+        /* 核心修改：动态强制处理包含 #include 的头部元标记样式 */
+        .cm-s-acwing-custom .cm-meta { color: #0000ff !important; font-weight: normal !important; } 
+        
+        /* 强制覆盖：凡是检测到尖括号或尖括号内的红化样式 */
+        .cm-s-acwing-custom .cm-include-tag { color: #ff0000 !important; font-weight: normal !important; }
         .cm-s-acwing-custom .cm-string,
-        .cm-s-acwing-custom .cm-string-2 { color: #ff0000; font-weight: normal; } /* 让尖括号及其内容强制变红 */
+        .cm-s-acwing-custom .cm-string-2 { color: #ff0000 !important; font-weight: normal !important; } 
         
-        /* 纯黑色：普通变量、操作符、符号等全面归黑 */
+        /* 纯黑色：普通变量、操作符、符号、注释等全面归黑 */
         .cm-s-acwing-custom .cm-operator,
         .cm-s-acwing-custom .cm-variable,
         .cm-s-acwing-custom .cm-variable-2,
         .cm-s-acwing-custom .cm-variable-3,
         .cm-s-acwing-custom .cm-def,
         .cm-s-acwing-custom .cm-comment,
-        .cm-s-acwing-custom .cm-property { color: #000000; }
+        .cm-s-acwing-custom .cm-property { color: #000000 !important; font-weight: normal !important; }
         
         .cm-s-acwing-custom .CodeMirror-cursor { border-left: 2px solid #000000; }
         .cm-s-acwing-custom .CodeMirror-selected { background: #b3d4fc; }
@@ -197,6 +200,27 @@
         const menuItems = document.querySelectorAll('.menu-item');
         const panels = document.querySelectorAll('.page-panel');
 
+        // 定义强制拆分高亮的核心处理函数（完美攻克 #include 染色难题）
+        function applyCustomHighlight(cm) {
+            cm.eachLine((lineHandle) => {
+                let text = lineHandle.text;
+                if (text.includes("#include")) {
+                    let lineNum = cm.getLineNumber(lineHandle);
+                    // 找到尖括号的起始索引
+                    let start = text.indexOf('<');
+                    let end = text.lastIndexOf('>');
+                    if (start !== -1 && end !== -1) {
+                        // 强制将 #include 后面的尖括号内容独立标记为纯红样式类
+                        cm.markText(
+                            {line: lineNum, ch: start}, 
+                            {line: lineNum, ch: end + 1}, 
+                            {className: "cm-include-tag"}
+                        );
+                    }
+                }
+            });
+        }
+
         // 右侧编辑器
         let editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
             mode: "text/x-c++src",
@@ -213,6 +237,8 @@
                 }
             }
         });
+        // 挂载动态监听，只要手写内容变更就实时刷新拆分头文件高亮
+        editor.on("change", (cm) => { applyCustomHighlight(cm); });
 
         // 左侧题解区
         let solutionEditor = CodeMirror.fromTextArea(document.getElementById("solution-input"), {
@@ -346,7 +372,10 @@
                 document.getElementById('solution-box').style.display = "flex";
                 
                 solutionEditor.setValue(currentProb.code);
-                setTimeout(() => solutionEditor.refresh(), 50);
+                setTimeout(() => {
+                    solutionEditor.refresh();
+                    applyCustomHighlight(solutionEditor); // 题解载入时，强制运行尖括号红化染色
+                }, 50);
                 
                 document.getElementById('sol-btn').innerText = "返回查看题目描述";
                 document.getElementById('sol-btn').style.background = "#6e7681";
