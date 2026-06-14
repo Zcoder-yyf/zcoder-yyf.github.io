@@ -7,10 +7,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; color: #333; background: #f4f5f7; }
         
-        /* 侧边栏 */
-        .sidebar { width: 260px; height: 100vh; background: #161b22; color: #fff; position: fixed; padding: 20px; display: flex; flex-direction: column; }
+        /* 动态二次元背景层：每次刷新随机显示，加入全屏遮罩防刺眼 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            color: #333; 
+            background: linear-gradient(rgba(244, 245, 247, 0.85), rgba(244, 245, 247, 0.85)), 
+                        url('https://api.moedog.org/moe/img?_t=' + Math.random()) no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+        /* 侧边栏：采用半透明磨砂玻璃，高逼格不遮挡背景 */
+        .sidebar { 
+            width: 260px; 
+            height: 100vh; 
+            background: rgba(22, 27, 34, 0.95); 
+            backdrop-filter: blur(8px);
+            color: #fff; 
+            position: fixed; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 10;
+        }
         .profile { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #30363d; }
         .profile img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #fff; }
         .profile h2 { margin-top: 10px; font-size: 18px; }
@@ -18,36 +38,37 @@
         .menu-item { padding: 12px; color: #cbd5e1; cursor: pointer; border-radius: 6px; margin-bottom: 5px; list-style: none; transition: 0.2s; font-size: 15px; }
         .menu-item:hover, .menu-item.active { background: #1f6feb; color: #fff; }
 
-        /* 内容区 */
-        .main-content { margin-left: 260px; flex: 1; padding: 40px; max-width: 1200px; }
+        /* 内容区面板：白色卡片带微微透明，透出背景的同时确保文字清晰 */
+        .main-content { margin-left: 260px; flex: 1; padding: 40px; max-width: 1200px; z-index: 1; }
         .page-panel { display: none; }
         .page-panel.active { display: block; }
         
-        /* 表格排版 */
-        .acwing-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); overflow: hidden; margin-bottom: 30px; }
+        .waiting-box { background: rgba(255, 255, 255, 0.9); padding: 30px; border-radius: 8px; border-left: 5px solid #eab308; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* AcWing 表格卡片 */
+        .acwing-card { background: rgba(255, 255, 255, 0.93); border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 30px; }
         .acwing-header { background: #fafafa; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .acwing-header h2 { font-size: 18px; color: #1f2328; font-weight: 600; }
-        .acwing-table { width: 100%; border-collapse: collapse; background: #fff; }
+        .acwing-table { width: 100%; border-collapse: collapse; background: transparent; }
         .acwing-table th { background: #f6f8fa; text-align: left; padding: 12px 20px; font-size: 14px; color: #656d76; border-bottom: 1px solid #d0d7de; }
         .acwing-table td { padding: 12px 20px; font-size: 14px; color: #24292f; border-bottom: 1px solid #d0d7de; }
-        .acwing-table tr:hover { background: #f3f4f6; }
+        .acwing-table tr:hover { background: rgba(31, 111, 235, 0.04); }
         .title-link { color: #0969da; text-decoration: none; font-weight: 500; cursor: pointer; }
         .title-link:hover { text-decoration: underline; }
         
-        /* OJ 弹出窗 */
+        /* OJ 弹出窗（不透明暗黑，确保答题视线专注） */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: #fff; width: 95%; max-width: 1300px; height: 92vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.15s ease-out; }
-        .modal-header { background: #161b22; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { flex: 1; display: flex; padding: 0; overflow: hidden; background: #0d1117; } /* 整体背景配合编辑器 */
+        .modal-box { background: #0d1117; width: 95%; max-width: 1300px; height: 92vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.15s ease-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-header { background: #161b22; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; }
+        .modal-body { flex: 1; display: flex; padding: 0; overflow: hidden; background: #0d1117; }
         
-        /* 编辑器区域撑满 */
         .code-area { flex: 1; display: flex; flex-direction: column; position: relative; }
         
-        /* ================= 蓝黑极客定制高亮主题 ================= */
+        /* AcWing 专属蓝黑编辑器字体与配色方案 */
         .cm-s-acwing-dark.CodeMirror { background: #0d1117; color: #c9d1d9; font-size: 18px !important; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.6; height: 100%; }
         .cm-s-acwing-dark .CodeMirror-gutters { background: #0d1117; border-right: 1px solid #30363d; }
         .cm-s-acwing-dark .CodeMirror-linenumber { color: #484f58; }
-        .cm-s-acwing-dark .cm-keyword { color: #79c0ff; font-weight: bold; } /* 蓝色关键字 */
+        .cm-s-acwing-dark .cm-keyword { color: #79c0ff; font-weight: bold; } 
         .cm-s-acwing-dark .cm-operator { color: #c9d1d9; }
         .cm-s-acwing-dark .cm-variable, .cm-s-acwing-dark .cm-variable-2, .cm-s-acwing-dark .cm-variable-3 { color: #c9d1d9; }
         .cm-s-acwing-dark .cm-def { color: #d2a8ff; }
@@ -66,6 +87,8 @@
         .btn-submit:hover { background: #2ea043; }
         .btn-solution { background: #1f6feb; color: #fff; }
         .btn-solution:hover { background: #388bfd; }
+        .btn-back { background: #6e7681; color: #fff; display: none; } /* 默认隐藏的返回编辑按键 */
+        .btn-back:hover { background: #848d97; }
 
         /* 后端不会提示框 */
         .toast { display: none; position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #1f6feb; color: #fff; padding: 15px 40px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 2000; font-size: 18px; text-align: center; }
@@ -84,11 +107,19 @@
             <p style="font-size: 12px; color: #8b949e; margin-top: 5px;">算法修炼中</p>
         </div>
         <ul class="menu">
+            <li class="menu-item" data-target="unity-panel">🎮 游戏引擎 (Unity)</li>
             <li class="menu-item active" data-target="algorithm-panel">🧮 算法与竞赛</li>
         </ul>
     </div>
 
     <div class="main-content">
+        <div id="unity-panel" class="page-panel">
+            <div class="waiting-box">
+                <h3 style="color: #854d0e; margin-bottom: 10px;">⏳ 等待作者 push...</h3>
+                <p style="color: #666; font-size: 14px;">Unity 相关技术文档与项目沉淀正在整理中，敬请期待！</p>
+            </div>
+        </div>
+
         <div id="algorithm-panel" class="page-panel active">
             <div id="acwing-list-container"></div>
         </div>
@@ -104,7 +135,8 @@
                 <div class="code-area">
                     <textarea id="editor-input"></textarea>
                     <div class="action-bar">
-                        <button class="btn btn-solution" onclick="showSolution()">查看题解</button>
+                        <button class="btn btn-solution" id="sol-btn" onclick="toggleSolution()">查看题解</button>
+                        <button class="btn btn-back" id="back-btn" onclick="backToEdit()">返回继续编辑</button>
                         <button class="btn btn-submit" onclick="submitCode()">提交运行</button>
                     </div>
                 </div>
@@ -117,15 +149,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/closebrackets.min.js"></script>
 
     <script>
-        // 初始化专业代码高亮编辑器
+        // 初始化 CodeMirror 编辑器
         let editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
             mode: "text/x-c++src",
-            theme: "acwing-dark", // 纯正蓝黑配色
+            theme: "acwing-dark", 
             lineNumbers: true,
             indentUnit: 4,
             tabSize: 4,
             lineWrapping: true,
-            autoCloseBrackets: true, // 开启括号自动补全！
+            autoCloseBrackets: true, // 开启大括号、小括号自动对齐补全
             extraKeys: {
                 "Tab": function(cm) {
                     var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
@@ -134,61 +166,49 @@
             }
         });
 
+        // 缓存未提交的用户草稿，用于返回编辑时复原
+        let userDraft = "";
+
         // ==========================================
-        // 💥 无情罗列：38 个独立打卡项源码字典
+        // 💥 38 门独立课源码大映射
         // ==========================================
         const allProblems = [
-            // --- 排序 ---
             { id: "qs", cat: "基础算法", name: "快速排序", code: `// 快速排序\n#include <iostream> \nusing namespace std; \nconst int N = 1e6 + 10;\nint q[N];\nvoid quick_sort(int q[],int l,int r)\n{\n\tif(l >= r) return;\n\tint x = q[(l + r + 1) / 2],i = l - 1,j = r + 1;\n\twhile(i < j)\n\t{\n\t\tdo i++;while(q[i] < x);\n\t\tdo j--;while(q[j] > x);\n\t\t\n\t\tif(i < j) swap(q[i],q[j]);\n\t}\n\tquick_sort(q,l,i-1),quick_sort(q,i,r);\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> q[i];\n\tquick_sort(q,0,n-1);\n\tfor(int i=0;i<n;i++) cout << q[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
             { id: "ms", cat: "基础算法", name: "归并排序", code: `// 归并排序\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint q[N],temp[N];\nvoid merge_sort(int q[],int l,int r)\n{\n\tif(l >= r) return;\n\tint mid = l + r >> 1;\n\tmerge_sort(q,l,mid-1),merge_sort(q,mid,r);\n\t\n\tint k = 0,i = l,j = mid + 1;\n\twhile(i <= mid && j <= r)\n\t{\n\t\tif(q[i] <= q[j]) temp[k++] = q[i++];\n\t\telse temp[k++] = q[j++];\n\t}\n\twhile(i <= mid) temp[k ++] = q[i++];\n\twhile(j <= r) temp[k++] = q[j++];\n\t\n\tfor(int i=l,j = 0;i <= r;i++) q[i] = temp[j];\n}\nvoid solve()\n{\n\tint n ;\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> q[i];\n\tmerge_sort(q,0,n-1);\n\tfor(int i=0;i<n;i++) cout << q[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            
-            // --- 二分 ---
-            { id: "bs", cat: "基础算法", name: "二分查找", code: `// 整数二分\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint q[N];\nvoid solve()\n{\n\tint n,q_cnt;\n\tcin >> n >> q_cnt;\n\twhile(n--)\n\t{\n\t\tint k;\n\t\tcin >> k;\n\t\tint l = -1,r = q_cnt; // 此处q_cnt原代码为q.size()\n\t\twhile(l + 1 != r)\n\t\t{\n\t\t\tint mid = l + r >> 1;\n\t\t\tif(q[mid] < k) l = mid;\n\t\t\telse r = mid;\n\t\t}\n\t\tint start_idx = r;//第一个大于等于k的下标\n\t\t\n\t\tl = -1,r = q_cnt;\n\t\twhile(l + 1 != r)\n\t\t{\n\t\t\tint mid = l + r >> 1;\n\t\t\tif(q[mid] <= k) l = mid;\n\t\t\telse r = mid;\n\t\t}\n\t\tint end_idx = l;//最后小于等于k的下标\n\t\tcout << start_idx << ' ' << end_idx << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-
-            // --- 高精度 ---
-            { id: "hp_add", cat: "基础算法", name: "高精度加法", code: `// 高精度加法\n#include <iostream> \n#include <vector> \n#include <algorithm> \nusing namespace std;\n\nvector<int> add(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C;\n\tint t = 0;\n\tfor(int i=0;i<A.size() || i<B.size();i++)\n\t{\n\t\tif(i < A.size()) t += A[i];\n\t\tif(i < B.size()) t += B[i];\n\t\tC.push_back(t % 10);\n\t\tt /= 10;\n\t}\n\tif(t) C.push_back(1);\n\treturn C;\n}\n\nvoid solve()\n{\n\tstring s1,s2;\n\tcin >> s1 >> s2;\n\tvector<int> A,B;\n\tfor(int i=s1.size() - 1;i >= 0;i--) A.push_back(s1[i] - '0');\n\tfor(int i=s2.size() - 1;i >= 0;i--) B.push_back(s2[i] - '0');\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "hp_sub", cat: "基础算法", name: "高精度减法", code: `// 高精度减法\n#include <iostream> \n#include <cstring> \n#include <vector>\nusing namespace std;\nbool cmp(vector<int> &A,vector<int> &B)\n{\n\tif(A.size() != B.size()) return A.size() > B.size();\n\tfor(int i=A.size() - 1;i >= 0;i--) \n\t\tif(A[i] != B[i]) return A[i] > B[i];\n\treturn true;\n}\nvector<int> sub(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C;\n\tfor(int i=0,t=0;i<A.size();i++)\n\t{\n\t\tt = A[i] - t;\n\t\tif(i < B.size()) t -= B[i];\n\t\tC.push_back((t + 10) % 10);\n\t\tif(t < 0) t = 1;\n\t\telse t = 0;\n\t}\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}\nvoid solve()\n{\n\tstring s1,s2;\n\tcin >> s1 >> s2;\n\tvector<int> A,B;\n\tfor(int i=s1.size() - 1;i >= 0;i--) A.push_back(s1[i] - '0');\n\tfor(int i=s2.size() - 1;i >= 0;i--) B.push_back(s2[i] - '0');\n\tif(cmp(A,B)) {\n\t\tauto C = sub(A,B);\n\t\tfor(int i=C.size() - 1;i >= 0;i--) cout << C[i];\n\t} else {\n\t\tauto C = sub(B,A);\n\t\tcout << "-";\n\t\tfor(int i=C.size() - 1;i >= 0;i--) cout << C[i];\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "hp_mul", cat: "基础算法", name: "高精度乘法", code: `// 高精度乘法\n#include <iostream> \n#include <vector>\nusing namespace std;\nvector<int> mul(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C(A.size() + B.size(),0);\n\tfor(int i=0;i<A.size();i++)\n\t\tfor(int j=0;j<B.size();j++)\n\t\t\tC[i + j] += A[i] * B[j];\n\t\t\t\n\tint t = 0;\n\tfor(int i=0;i<C.size();i++)\n\t{\n\t\tt += C[i];\n\t\tC[i] = t % 10;\n\t\tt /= 10;\n\t}\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}\nvoid solve()\n{\n\tstring s1,s2;\n\tcin >> s1 >> s2;\n\tvector<int> A,B;\n\tfor(int i = s1.size() - 1; i >= 0; i--) A.push_back(s1[i] - '0');\n\tfor(int i = s2.size() - 1; i >= 0; i--) B.push_back(s2[i] - '0');\n\tauto C = mul(A, B);\n\tfor(int i = C.size() - 1; i >= 0; i--) cout << C[i];\n}\nint main()\n{\n\tios::sync_with_stdio(0), cin.tie(0), cout.tie(0);\n\tint _; _ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "hp_div", cat: "基础算法", name: "高精度除法", code: `// 高精度除法\n#include <iostream> \n#include <vector>\n#include <algorithm>\nusing namespace std;\nvector<int> div(vector<int> &A, int b, int &r)\n{\n\tvector<int> C;\n\tr = 0;\n\tfor(int i=A.size() - 1;i >= 0;i--)\n\t{\n\t\tr = r * 10 + A[i];\n\t\tC.push_back(r / b);\n\t\tr %= b;\n\t}\n\treverse(C.begin(),C.end());\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}\nvoid solve()\n{\n\tstring a;\n\tint b;\n\tif (!(cin >> a >> b)) return;\n\tvector<int> A;\n\tfor(int i = a.size() - 1; i >= 0; i--) A.push_back(a[i] - '0');\n\tint r;\n\tauto C = div(A, b, r);\n\tfor(int i = C.size() - 1; i >= 0; i--) cout << C[i];\n\tcout << endl << r << endl;\n}\nint main()\n{\n\tios::sync_with_stdio(0), cin.tie(0), cout.tie(0);\n\tint _; _ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "hp_sq", cat: "基础算法", name: "大数字平方差", code: `#include <iostream> \n#include <vector> \nusing namespace std;\nbool cmp(vector<int> &A,vector<int> &B)\n{\n\tif(A.size() != B.size()) return A.size() > B.size();\n\tfor(int i=A.size() - 1;i >= 0;i--) \n\t\tif(A[i] != B[i]) return A[i] > B[i];\n\treturn true;\n}\nvector<int> sub(vector<int> &A,vector<int> &B)\n{\n\tint t =0 ;\n\tvector<int> C;\n\tfor(int i=0;i<A.size();i++)\n\t{\n\t\tt = A[i] - t;\n\t\tif(i < B.size()) t -= B[i];\n\t\tC.push_back((t + 10) % 10);\n\t\tif(t < 0) t = 1; else t = 0;\n\t}\n\twhile(C.size() > 1 && C.back() == 0 ) C.pop_back();\n\treturn C;\n}\nvector<int> mul(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C(A.size() + B.size(),0);\n\tfor(int i=0;i<A.size();i++)\n\t\tfor(int j=0;j<B.size();j++) C[i + j] += A[i] * B[j];\n\tint t =0 ;\n\tfor(int i=0;i<C.size();i++)\n\t{ t += C[i]; C[i] = t % 10; t /= 10; }\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}\nvector<int> add(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C;\n\tif(A.size() < B.size()) return add(B,A);\n\tint t = 0;\n\tfor(int i=0;i<A.size();i++)\n\t{\n\t\tt += A[i];\n\t\tif(i < B.size()) t += B[i];\n\t\tC.push_back(t % 10);\n\t\tt /= 10;\n\t}\n\tif(t) C.push_back(1);\n\treturn C;\n}\nvoid solve()\n{\n\tstring s1,s2; cin >> s1 >> s2;\n\tvector<int> A,B;\n\tfor(int i=s1.size() - 1;i >= 0;i --) A.push_back(s1[i] - '0');\n\tfor(int i=s2.size() - 1;i >= 0;i -- ) B.push_back(s2[i] - '0');\n\tauto add_part = add(A,B);\n\tauto sub_part = cmp(A,B) ? sub(A,B) : sub(B,A);\n\tauto res = mul(add_part,sub_part);\n\tif(!cmp(A,B) && !(res.size() == 1 && res[0] == 0)) cout << '-';\n\tfor(int i=res.size() - 1;i >= 0;i --) cout << res[i];\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-
-            // --- 前缀和与差分 ---
-            { id: "pf1", cat: "基础算法", name: "一维前缀和", code: `// 一维前缀和\n#include <iostream> \nusing namespace std;\nint n,m;\nconst int N = 1e6 + 10;\nint q[N];\nvoid solve()\n{\n\tcin >> n >> m;\n\tfor(int i=1;i<=n;i++) cin >> q[i];\n\tfor(int i=1;i<=n;i++) q[i] += q[i-1];\n\twhile(m--)\n\t{\n\t\tint l,r;\n\t\tcin >> l >> r;\n\t\tcout << q[r] - q[l-1] << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_  = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "pf2", cat: "基础算法", name: "二维前缀和", code: `// 二维前缀和\n#include <iostream> \nusing namespace std;\nconst int N = 1010;\nint a[N][N],s[N][N];\nint n,m;\nvoid solve()\n{\n\tint q;\n\tcin >> n >> m >> q;\n\tfor(int i=1;i<=n;i++)\n\t\tfor(int j=1;j<=m;j++)\n\t\t\tcin >> a[i][j];\n\tfor(int i=1;i<=n;i++)\n\t\tfor(int j=1;j<=m;j++)\n\t\t\ts[i][j] = s[i-1][j] + s[i][j-1] - s[i-1][j-1] + a[i][j];\n\twhile(q--)\n\t{\n\t\tint x1,y1,x2,y2;\n\t\tcin >> x1 >> y1 >> x2 >> y2;\n\t\tcout << s[x2][y2] - s[x1-1][y2] - s[x2][y1-1] + s[x1-1][y1-1] << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_= 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "df1", cat: "基础算法", name: "一维差分", code: `// 一维差分\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint a[N],b[N];\nvoid solve()\n{\n\tint n,m;\n\tcin >> n >> m;\n\tfor(int i=1;i<=n;i++) cin >> a[i];\n\tfor(int i=1;i<=n;i++) b[i] = a[i] - a[i-1]; \n\twhile(m--)\n\t{\n\t\tint l,r,c;\n\t\tcin >> l >> r >> c;\n\t\tb[l] += c;\n\t\tb[r + 1] -= c;\n\t}\n\tfor(int i=1;i<=n;i++) a[i] = b[i] + a[i-1];\n\tfor(int i=1;i<=n;i++) cout << a[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "df2", cat: "基础算法", name: "二维差分", code: `// 二维差分\n#include <iostream> \nusing namespace std;\nconst int N = 1010;\nint a[N][N],b[N][N];\nvoid insert(int x1,int y1,int x2,int y2,int c)\n{\n\tb[x1][y1] += c;\n\tb[x2 + 1][y2 + 1] += c;\n\tb[x1][y2 + 1] -= c;\n\tb[x2 + 1][y1] -= c;\n}\nvoid solve()\n{\n\tint n,m,q;\n\tcin >> n >> m >> q;\n\tfor(int i=1;i<=n;i++)\n\t\tfor(int j=1;j<=m;j++)\n\t\t\tcin >> a[i][j];\n\tfor(int i=1;i<=n;i++)\n\t\tfor(int j=1;j<=m;j++)\n\t\t\tinsert(i,j,i,j,a[i][j]);\n\twhile(q--)\n\t{\n\t\tint x1,y1,x2,y2,c;\n\t\tcin >> x1 >> y1 >> x2 >> y2 >> c;\n\t\tinsert(x1,y1,x2,y2,c);\n\t}\n\tfor(int i=1;i<=n;i++)\n\t\tfor(int j=1;j<=m;j++)\n\t\t\tb[i][j] += b[i-1][j] + b[i][j-1] - b[i-1][j-1];\n\tfor(int i=1;i<=n;i++)\n\t\tfor(int j=1;j<=m;j++)\n\t\t\tif(j == m) cout << b[i][j] << endl;\n\t\t\telse cout << b[i][j] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-
-            // --- 双指针 ---
-            { id: "tp1", cat: "基础算法", name: "双指针(最长连续不重复子序列)", code: `// 双指针：最长连续不重复子序列\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint a[N],s[N];\nint n;\nvoid solve()\n{\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> a[i];\n\tint res=  0;\n\tfor(int i=0,j=0;i<n;i++ )\n\t{\n\t\ts[a[i]]++;\n\t\twhile(s[a[i]] > 1)\n\t\t{\n\t\t\ts[a[j]]--;\n\t\t\tj++;\n\t\t}\n\t\tres = max(res,i - j + 1);\n\t}\n\tcout << res ;\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "tp2", cat: "基础算法", name: "双指针(数组元素目标和找下标)", code: `// 双指针：数组元素的目标和找下标\n#include <iostream>\nusing namespace std;\nconst int N = 1e5 + 10;\nint a[N],b[N];\nvoid solve()\n{\n\tint n,m,x;\n\tcin >> n >> m >> x;\n\tfor(int i=0;i<n;i++) cin >> a[i];\n\tfor(int i=0;i<m;i++) cin >> b[i];\n\tfor(int i=0,j=m-1;i<n;i++)\n\t{\n\t\twhile(j >= 0 && a[i] + b[j] > x) j--;\n\t\tif(a[i] + b[j] == x)\n\t\t{\n\t\t\tcout << i << ' ' << j << endl;\n\t\t\tbreak;\n\t\t}\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "tp3", cat: "基础算法", name: "双指针(判断子序列)", code: `// 双指针：判断子序列\n#include <iostream> \nusing namespace std;\nvoid solve()\n{\n\tint n,m;\n\tcin >> n >> m;\n\tint a[n],b[m];\n\tfor(int i=0;i<n;i++) cin >> a[i];\n\tfor(int i=0;i<m;i++) cin >> b[i];\n\tint i =0,j = 0;\n\twhile(i < n && j < m)\n\t{\n\t\tif(a[i] == b[j]) i++;\n\t\tj++;\n\t}\n\tif(i == n) cout << "Yes";\n\telse cout << "No";\n} \nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "tp4", cat: "基础算法", name: "双指针(区间合并)", code: `// 双指针：区间合并\n#include <iostream> \n#include <algorithm> \n#include <vector> \nusing namespace std;\ntypedef pair<int,int> PII;\nconst int N = 1e5 + 10;\nint n;\nvector<PII> segs;\nvoid merge(vector<PII> &segs)\n{\n\tvector<PII> res;\n\tsort(segs.begin(),segs.end());\n\tint st = -2e9,ed = -2e9;//哨兵值\n\tfor(auto seg : segs)\n\t{\n\t\tif(ed < seg.first) \n\t\t{\n\t\t\tif(st != -2e9) res.push_back({st,ed});\n\t\t\tst = seg.first,ed = seg.second;\n\t\t}\n\t\telse ed = max(ed,seg.second);\n\t}\n\tif(st != -2e9) res.push_back({st,ed});\n\tsegs = res;\n}\nvoid solve()\n{\n\tcin >> n;\n\twhile(n--)\n\t{\n\t\tint l,r;\n\t\tcin >> l >> r;\n\t\tsegs.push_back({l,r});\n\t}\n\tmerge(segs);\n\tcout << segs.size() << endl;\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-
-            // --- 位运算与离散化 ---
-            { id: "lowbit", cat: "基础算法", name: "lowbit运算", code: `// lowbit运算模版题\n#include <iostream> \nusing namespace std;\nvoid solve()\n{\n\tint n ;\n\tcin >> n;\n\twhile(n--)\n\t{\n\t\tint x;\n\t\tcin >> x;\n\t\tint res =0;\n\t\twhile(x) x -= x & -x,res ++;\n\t\tcout << res << ' ';\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "lsh", cat: "基础算法", name: "离散化(坐标去重映射)", code: `// 离散化模版题 //离散化 + 前缀和\n#include <iostream> \n#include <algorithm> \n#include <vector>\nusing namespace std;\ntypedef pair<int,int> PII;\nvector<int> alls;\nvector<PII> add,query;\nconst int N = 300010;\nint a[N],s[N];\nint n,m;\nint find(int x)\n{\n\tint l = -1,r = alls.size();\n\twhile(l + 1 != r)\n\t{\n\t\tint mid = l + r >> 1;\n\t\tif(alls[mid] < x) l = mid;\n\t\telse r = mid;\n\t}\n\treturn r + 1;\n}\nvector<int>:: iterator unique(vector<int> &a)\n{\n\tint j = 0;\n\tfor(int i=0;i<a.size();i++)\n\t\tif(!i || a[i] != a[i-1])\n\t\t\ta[j++] = a[i];\n\treturn a.begin() + j;\n}\nvoid solve()\n{\n\tcin >> n >> m;\n\tfor(int i=0;i<n;i++) \n\t{\n\t\tint x,c;\n\t\tcin >> x >> c;\n\t\tadd.push_back({x,c});\n\t\talls.push_back(x);\n\t}\n\tfor(int i=0;i<m;i++)\n\t{\n\t\tint l,r;\n\t\tcin >> l >> r;\n\t\tquery.push_back({l,r});\n\t\talls.push_back(l);\n\t\talls.push_back(r);\n\t}\n\tsort(alls.begin(), alls.end());\n\talls.erase(unique(alls), alls.end());\n\tfor(auto item : add)\n\t{\n\t\tint x = find(item.first);\n\t\ta[x] += item.second;\n\t}\n\tfor(int i = 1; i <= alls.size(); i ++ ) s[i] = s[i - 1] + a[i];\n\tfor(auto item : query)\n\t{\n\t\tint l = find(item.first), r = find(item.second);\n\t\tcout << s[r] - s[l - 1] << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-
-            // --- 数据结构 ---
-            { id: "ll1", cat: "数据结构", name: "单链表(数组模拟)", code: `//单链表 邻接表\n#include <iostream> \nusing namespace std;\nconst int N = 1e5 + 10;\nint head,e[N],ne[N],idx;\nvoid init()\n{\n\thead = -1;\n\tidx= 0 ;\n}\nvoid add_to_head(int x)\n{\n\te[idx] = x;\n\tne[idx] = head;\n\thead = idx;\n\tidx++;\n}\nvoid add(int k,int x)\n{\n\te[idx] = x;\n\tne[idx] = ne[k];\n\tne[k] = idx;\n\tidx++;\n}\nvoid remove(int k)\n{\n\tne[k] = ne[ne[k]];\n}\nvoid solve()\n{\n\tint m;\n\tcin >> m;\n\twhile(m--)\n\t{\n\t\tint k,x;\n\t\tchar op;\n\t\tcin >> op;\n\t\tif(op == 'H') \n\t\t{\n\t\t\tcin >> x;\n\t\t\tadd_to_head(x);\n\t\t}\n\t\telse if(op == 'D')\n\t\t{\n\t\t\tcin >> k;\n\t\t\tif(!k) head = ne[head];\n\t\t\telse remove(k - 1);\n\t\t}\n\t\telse\n\t\t{\n\t\t\tcin >> k >> x;\n\t\t\tadd(k - 1,x);\n\t\t}\n\t}\n\tfor(int i = head;i != -1;i = ne[i]) cout << e[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tinit();\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "stk1", cat: "数据结构", name: "单调栈", code: `// 单调栈做法 O(n)\n#include <iostream>\nusing namespace std;\nconst int N = 1e5 + 10;\nint stk[N],tt;\nint n;\nvoid solve()\n{\n\tcin >> n;\n\tfor(int i = 0; i < n; i ++ )\n\t{\n\t\tint x;\n\t\tcin >> x;\n\t\twhile(tt && stk[tt] >= x) tt --;\n\t\tif(tt) cout << stk[tt] << ' ';\n\t\telse cout << -1 << ' ';\n\t\tstk[++tt] = x;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "stk_que", cat: "数据结构", name: "单调栈理论分析", code: `// 单调栈理论与数组\n#include <iostream>\nusing namespace std;\nconst int N = 100010;\nint a[N], q[N];\nint n;\nint main()\n{\n\tcin >> n;\n\tfor (int i = 0; i < n; i++) cin >> a[i];\n\tint tt = -1;\n\tfor (int i = 0; i < n; i++)\n\t{\n\t\t// 弹出所有 >= 当前值，维护递增\n\t\twhile (tt != -1 && a[q[tt]] >= a[i]) tt--;\n\t\t\n\t\tif (tt == -1) cout << -1 << " ";\n\t\telse cout << a[q[tt]] << " ";\n\t\t\n\t\tq[++tt] = i; // 当前下标入栈\n\t}\n\treturn 0;\n}` },
-            { id: "window", cat: "数据结构", name: "单调队列(滑动窗口)", code: `// 滑动窗口(单调队列)\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint a[N],q[N];\nint n,k;\nvoid solve()\n{\n\tcin >> n >> k;\n\tfor(int i = 0;i < n;i ++ ) cin >> a[i];\n\t\n\tint hh = 0,tt = -1;\n\tfor(int i = 0; i < n; i ++ )\n\t{\n\t\tif(hh <= tt && i - k + 1 > q[hh]) hh++;\n\t\twhile(hh <= tt && a[q[tt]] >= a[i]) tt--;\n\t\tq[++tt] = i;\n\t\tif(i >= k - 1) cout << a[q[hh]] << ' ';\n\t}\n\tcout << endl;\n\t\n\thh = 0,tt = -1;\n\tfor(int i = 0; i < n; i ++ )\n\t{\n\t\tif(hh <= tt && i - k + 1 > q[hh]) hh++;\n\t\twhile(hh <= tt && a[q[tt]] <= a[i]) tt--;\n\t\tq[++tt] = i;\n\t\tif(i >= k - 1) cout << a[q[hh]] << ' ';\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cout.tie(0),cin.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "uf1", cat: "数据结构", name: "并查集(合并集合)", code: `//并查集 合并集合\n#include <iostream> \nusing namespace std;\nconst int N = 1e5 + 10;\nint n,m;\nint p[N];//每个元素父节点\nint find(int x) // 返回x所在的祖宗节点 + 路径压缩\n{\n\tif(p[x] != x) p[x] = find(p[x]);\n\treturn p[x];\n}\nvoid solve()\n{\n\tcin >> n >> m;\n\tfor(int i = 0;i < n; i ++) p[i] = i;\n\twhile(m --)\n\t{\n\t\tchar op[2];\n\t\tint a,b;\n\t\tcin >> op >> a >> b;\n\t\tif(op[0] == 'M') p[find(a)] = find(b);\n\t\telse \n\t\t{\n\t\t\tif(find(a) == find(b)) cout << "Yes" << endl;\n\t\t\telse cout << "No" << endl;\n\t\t}\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "uf2", cat: "数据结构", name: "并查集(连通块)", code: `// 并查集 连通块\n#include <iostream> \nusing namespace std;\nconst int N = 1e5 + 10;\nint p[N],s[N];\nint find(int x)\n{\n\tif(p[x] != x) p[x] = find(p[x]);\n\treturn p[x];\n}\nvoid solve()\n{\n\tint n,m;\n\tcin >> n >> m;\n\tfor(int i = 1;i <= n;i ++) \n\t{\n\t\tp[i] = i;\n\t\ts[i] = 1;\n\t}\n\twhile(m --)\n\t{\n\t\tchar op[5];\n\t\tint a,b;\n\t\tcin >> op;\n\t\tif(op[0] == 'C')\n\t\t{\n\t\t\tcin >> a >> b;\n\t\t\tif(find(a) == find(b)) continue;\n\t\t\ts[find(b)] += s[find(a)];\n\t\t\tp[find(a)] = find(b);\n\t\t}\n\t\telse if(op[1] == '1')\n\t\t{\n\t\t\tcin >> a >> b;\n\t\t\tif(find(a) == find(b)) cout << "Yes" << endl;\n\t\t\telse cout << "No" << endl;\n\t\t}\n\t\telse \n\t\t{\n\t\t\tcin >> a;\n\t\t\tcout << s[find(a)] << endl;\n\t\t}\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "uf3", cat: "数据结构", name: "并查集(食物链)", code: `// 带权并查集 食物链\n#include <iostream> \nusing namespace std;\nconst int N = 50010;\nint n,k;\nint p[N],d[N];\nint find(int x)\n{\n\tif(p[x] != x)\n\t{\n\t\tint t = find(p[x]);\n\t\td[x] += d[p[x]];\n\t\tp[x] = t;\n\t}\n\treturn p[x];\n}\nvoid solve()\n{\n\tcin >> n >> k;\n\tfor (int i = 0; i < n; ++ i) p[i] = i;\n\tint res= 0 ;\n\twhile (k -- )\n\t{\n\t\tint t, x, y;\n\t\tcin >> t >> x >> y;\n\t\tint px = find(x), py = find(y);\n\t\tif (x > n || y > n) res ++ ;\n\t\telse if (t == 1)\n\t\t{\n\t\t\tif (px == py && (d[x] - d[y]) % 3) res ++ ;\n\t\t\telse if (px != py)\n\t\t\t{\n\t\t\t\tp[px] = py;\n\t\t\t\td[px] = d[y] - d[x];\n\t\t\t}\n\t\t}\n\t\telse\n\t\t{\n\t\t\tif (px == py && (d[x] - 1 - d[y]) % 3) res ++ ;\n\t\t\telse if (px != py) \n\t\t\t{\n\t\t\t\tp[px] = py;\n\t\t\t\td[px] = d[y] - d[x] + 1;\n\t\t\t}\n\t\t}\n\t}\n\tcout << res << endl;\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "heap", cat: "数据结构", name: "堆排序", code: `// 堆排序 完全二叉树小根堆\n#include <iostream> \n#include <algorithm> \nusing namespace std;\nconst int N = 1e5 + 10;\nint h[N],sz;\nvoid down(int u)\n{\n\tint t = u;\n\tif(u * 2 <= sz && h[u * 2] < h[t]) t = u * 2;\n\tif(u * 2 + 1 <= sz && h[u * 2 + 1] < h[t]) t = u * 2 + 1;\n\tif(u != t)\n\t{\n\t\tswap(h[u], h[t]);\n\t\tdown(t);\n\t}\n}\nvoid solve()\n{\n\tint n, m;\n\tcin >> n >> m;\n\tfor(int i = 1;i <= n;i ++) cin >> h[i];\n\tsz = n;\n\tfor(int i = n / 2;i ;i --) down(i);\n\twhile(m --)\n\t{\n\t\tcout << h[1] << ' ';\n\t\th[1] = h[sz];\n\t\tsz --;\n\t\tdown(1);\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "hash1", cat: "数据结构", name: "哈希表(拉链法)", code: `// 拉链法哈希\n#include <iostream>\n#include <cstring> \nusing namespace std;\nconst int N = 1e5 + 3;\nint h[N],e[N],ne[N],idx;\nvoid insert(int x)\n{\n\tint k = (x % N + N) % N;\n\te[idx] = x;\n\tne[idx] = h[k];\n\th[k] = idx ++;\n}\nbool find(int x)\n{\n\tint k = (x % N + N) % N;\n\tfor(int i = h[k] ; i != -1 ;i = ne[i])\n\t{\n\t\tif(e[i] == x) return 1;\n\t}\n\treturn 0;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tmemset(h, -1, sizeof h);\n\twhile(n --)\n\t{\n\t\tchar op[2];\n\t\tint x;\n\t\tcin >> op >> x;\n\t\tif(op[0] == 'I') insert(x);\n\t\telse \n\t\t{\n\t\t\tif(find(x)) cout << "Yes" << endl;\n\t\t\telse cout << "No" << endl;\n\t\t}\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "hash2", cat: "数据结构", name: "哈希表(开放寻址法)", code: `// 开放寻址法\n#include <iostream> \n#include <cstring> \nusing namespace std;\nconst int N = 2e5 + 3, null = 0x3f3f3f3f;\nint h[N];\nint find(int x)\n{\n\tint k = (x % N + N) % N;\n\twhile(h[k] != null && h[k] != x)\n\t{\n\t\tk ++;\n\t\tif(k == N) k = 0;\n\t}\n\treturn k;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tmemset(h , 0x3f, sizeof h);\n\twhile(n --)\n\t{\n\t\tchar op[2];\n\t\tint x;\n\t\tcin >> op >> x;\n\t\tint k = find(x);\n\t\tif(op[0] == 'I') h[k] = x;\n\t\telse\n\t\t{\n\t\t\tif(h[k] != null) cout << "Yes" << endl;\n\t\t\telse cout << "No" << endl;\n\t\t}\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-
-            // --- 搜索与数论 ---
-            { id: "dfs", cat: "数论与搜索", name: "深搜(排列组合)", code: `//深搜模版题 排列组合问题\n#include <iostream> \nusing namespace std;\nconst int N = 10;\nint path[N];\nbool st[N];\nint n;\nvoid dfs(int u)\n{\n\tif(u >= n)\n\t{\n\t\tfor(int i=0;i<n;i++) cout << path[i] << ' ';\n\t\tcout << endl;\n\t\treturn ;\n\t}\n\tfor(int i=1;i<=n;i++)\n\t{\n\t\tif(!st[i])\n\t\t{\n\t\t\tpath[u] = i;\n\t\t\tst[i] = 1;\n\t\t\tdfs(u + 1);\n\t\t\tpath[u] = 0;\n\t\t\tst[i] = 0;\n\t\t}\n\t}\n}\nvoid solve()\n{\n\tcin >> n;\n\tdfs(0);\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "prime", cat: "数论与搜索", name: "质数筛", code: `// 质数筛 \n#include <iostream> \n#include <vector> \nusing namespace std;\nvector<bool> is_prime(int n)\n{\n\tvector<bool> prime(n+1,true);\n\tprime[0] = prime[1] = false;\n\tfor(int i=2;i*i<=n;i++)\n\t{\n\t\tif(prime[i])\n\t\t{\n\t\t\tfor(int j=i*i;j<=n;j+=i)\n\t\t\t{\n\t\t\t\tprime[j] = false;\n\t\t\t}\n\t\t}\n\t}\n\treturn prime;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tint cnt =0 ;\n\tvector<bool> prime = is_prime(n);\n\tfor(int i=1;i<=n;i++)\n\t{\n\t\tif(prime[i]) cnt++;\n\t}\n\tcout << cnt;\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "qpow", cat: "数论与搜索", name: "快速幂", code: `// 快速幂\n#include <iostream> \nusing namespace std;\ntypedef long long LL;\nLL q_pow(long a,long b,long mod)\n{\n\tLL res = 1;\n\ta %= mod;\n\twhile(b > 0)\n\t{\n\t\tif(b & 1)\n\t\t{\n\t\t\tres = res * a % mod;\n\t\t}\n\t\ta = a * a % mod;\n\t\tb >>= 1;\n\t}\n\treturn res;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\twhile(n--) \n\t{\n\t\tlong a,b,c;\n\t\tcin >> a >> b >> c;\n\t\tcout << q_pow(a,b,c) << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "gcd", cat: "数论与搜索", name: "GCD和LCM", code: `// gcd\n#include <iostream> \nusing namespace std;\nint gcd(int a,int b)\n{\n\treturn b == 0 ? a : gcd(b,a % b);\n}\nint lcm(int a,int b)\n{\n\treturn a / gcd(a,b) * b;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\twhile(n--)\n\t{\n\t\tint a,b;\n\t\tcin >> a >> b;\n\t\tcout << gcd(a,b) << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "comb1", cat: "组合数学", name: "组合数1(杨辉三角)", code: `// 组合数1 杨辉三角\n#include <iostream> \nusing namespace std;\nconst int N = 2010;\nint q[N][N];\nvoid init()\n{\n\tfor(int i=0;i<N;i++)\n\t\tfor(int j=0;j<=i;j++)\n\t\t\tif(!j) q[i][j] = 1;\n\t\t\telse q[i][j] = q[i-1][j] + q[i - 1][j - 1];\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\twhile(n--)\n\t{\n\t\tint a,b;\n\t\tcin >> a >> b;\n\t\tcout << q[a][b] << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tinit();\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "comb2", cat: "组合数学", name: "组合数2(逆元运算)", code: `// 组合数2 逆元运算\n#include <iostream> \nusing namespace std;\nconst int N = 1e5 + 10,mod = 1e9 + 7;\nint fact[N],infact[N];\ntypedef long long LL;\nLL q_pow(int a,int b,int mod)\n{\n\tLL res = 1;\n\ta %= mod;\n\twhile(b > 0)\n\t{\n\t\tif(b & 1) res = (LL) res * a % mod;\n\t\ta = (LL)a * a % mod;\n\t\tb >>= 1;\n\t}\n\treturn res;\n}\nvoid init()\n{\n\tfact[0] = 1;\n\tfor(int i=1;i<N;i++) fact[i] = (LL)fact[i - 1] * i % mod;\n\tfact[N-1] = q_pow(fact[N-1],mod-2,mod);\n\tfor(int i = N-2;i >= 0;i--) infact[i] = (LL) infact[i+1] * (i + 1) % mod;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n ;\n\twhile(n--)\n\t{\n\t\tint a,b;\n\t\tcin >> a >> b;\n\t\tcout << (LL) fact[a] * infact[a - b] % mod * infact[b] % mod << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tinit();\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "comb3", cat: "组合数学", name: "组合数3(Lucas定理)", code: `// lucas定理\n#include <iostream> \nusing namespace std;\ntypedef long long LL;\nint p;\nLL q_pow(LL a,LL b)\n{\n\tLL res = 1;\n\ta %= p;\n\twhile(b > 0)\n\t{\n\t\tif(b & 1) res = (LL) res * a % p;\n\t\ta = (LL) a * a % p;\n\t\tb >>= 1;\n\t}\n\treturn res;\n}\nLL C(LL a,LL b)\n{\n\tif(b > a) return 0;\n\tLL res = 1;\n\tfor(LL i = 1,j = a;i <= b;i++,j--)\n\t{\n\t\tres = res * j % p;\n\t\tres = res * q_pow(i,p-2) % p;\n\t}\n\treturn res;\n}\nLL lucas(LL a,LL b)\n{\n\tif(!b) return 1;\n\treturn C(a % p,b % p) * lucas(a / p,b / p) % p;\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\twhile(n--)\n\t{\n\t\tLL a,b;\n\t\tcin >> a >> b;\n\t\tcout << lucas(a,b) << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
-            { id: "comb4", cat: "组合数学", name: "组合数4(勒让德定理)", code: `// 勒让德定理不取模高精度组合数\n#include <iostream> \n#include <vector> \nusing namespace std;\ntypedef long long LL ;\nconst int N = 5010;\nint prime[N],sum[N],cnt;\nbool st[N];\nvector<int> mul(vector<int> &A,int x)\n{\n\tvector<int> C;\n\tLL t = 0;\n\tfor(auto num : A)\n\t{\n\t\tt += (LL)num * x;\n\t\tC.push_back(t % 10);\n\t\tt /= 10;\n\t}\n\twhile(t)\n\t{\n\t\tC.push_back(t % 10);\n\t\tt /= 10;\n\t}\n\treturn C;\n}\nvoid init()\n{\n\tfill(st, st + N, true);\n\tst[0] = st[1] = false;\n\tfor(int i = 2; i < N; i++) \n\t{\n\t\tif(st[i])\n\t\t{\n\t\t\tprime[cnt++] = i; \n\t\t\tfor(int j = i * 2; j < N; j += i) st[j] = false;\n\t\t}\n\t}\n}\nint get(int n,int p)\n{\n\tint res = 0;\n\twhile(n)\n\t{\n\t\tres += n / p;\n\t\tn /= p;\n\t}\n\treturn res;\n}\nvoid solve()\n{\n\tint a,b;\n\tcin >> a >> b;\n\tfor(int i=0;i<cnt;i++)\n\t{\n\t\tint p = prime[i];\n\t\tsum[i] = get(a,p) - get(b,p) - get(a-b,p);\n\t}\n\tvector<int> res;\n\tres.push_back(1);\n\tfor(int i=0;i<cnt;i++)\n\t\tfor(int j=0;j<sum[i];j++)\n\t\t\tres = mul(res,prime[i]);\n\t\n\tfor(int i=res.size() - 1;i >= 0;i--) cout << res[i];\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tinit();\n\tint _;_ = 1;\n\twhile(_-- )solve();\n\treturn 0;\n}` }
+            { id: "bs", cat: "基础算法", name: "二分查找", code: `// 整数二分\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint q[N];\nvoid solve()\n{\n\tint n,q_cnt;\n\tcin >> n >> q_cnt;\n\twhile(n--)\n\t{\n\t\tint k;\n\t\tcin >> k;\n\t\tint l = -1,r = q_cnt;\n\t\twhile(l + 1 != r)\n\t\t{\n\t\t\tint mid = l + r >> 1;\n\t\t\tif(q[mid] < k) l = mid;\n\t\t\telse r = mid;\n\t\t}\n\t\tint start_idx = r;\n\t\t\n\t\tl = -1,r = q_cnt;\n\t\twhile(l + 1 != r)\n\t\t{\n\t\t\tint mid = l + r >> 1;\n\t\t\tif(q[mid] <= k) l = mid;\n\t\t\telse r = mid;\n\t\t}\n\t\tint end_idx = l;\n\t\tcout << start_idx << ' ' << end_idx << endl;\n\t}\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
+            { id: "hp_add", cat: "基础算法", name: "高精度加法", code: `// 高精度加法\n#include <iostream> \n#include <vector> \n#include <algorithm> \nusing namespace std;\nvector<int> add(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C;\n\tint t = 0;\n\tfor(int i=0;i<A.size() || i<B.size();i++)\n\t{\n\t\tif(i < A.size()) t += A[i];\n\t\tif(i < B.size()) t += B[i];\n\t\tC.push_back(t % 10);\n\t\tt /= 10;\n\t}\n\tif(t) C.push_back(1);\n\treturn C;\n}` },
+            { id: "hp_sub", cat: "基础算法", name: "高精度减法", code: `// 高精度减法\n#include <iostream> \n#include <vector>\nusing namespace std;\nbool cmp(vector<int> &A,vector<int> &B)\n{\n\tif(A.size() != B.size()) return A.size() > B.size();\n\tfor(int i=A.size() - 1;i >= 0;i--) if(A[i] != B[i]) return A[i] > B[i];\n\treturn true;\n}` },
+            { id: "hp_mul", cat: "基础算法", name: "高精度乘法", code: `// 高精度乘法\n#include <iostream> \n#include <vector>\nusing namespace std;\nvector<int> mul(vector<int> &A,vector<int> &B)\n{\n\tvector<int> C(A.size() + B.size(),0);\n\tfor(int i=0;i<A.size();i++)\n\t\tfor(int j=0;j<B.size();j++) C[i + j] += A[i] * B[j];\n\tint t = 0;\n\tfor(int i=0;i<C.size();i++) { t += C[i]; C[i] = t % 10; t /= 10; }\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}` },
+            { id: "hp_div", cat: "基础算法", name: "高精度除法", code: `// 高精度除法\n#include <iostream> \n#include <vector>\n#include <algorithm>\nusing namespace std;\nvector<int> div(vector<int> &A, int b, int &r)\n{\n\tvector<int> C; r = 0;\n\tfor(int i=A.size() - 1;i >= 0;i--) { r = r * 10 + A[i]; C.push_back(r / b); r %= b; }\n\treverse(C.begin(),C.end());\n\twhile(C.size() > 1 && C.back() == 0) C.pop_back();\n\treturn C;\n}` },
+            { id: "hp_sq", cat: "基础算法", name: "大数字平方差", code: `// 大数字平方差\n#include <iostream> \n#include <vector> \nusing namespace std;\nvoid solve()\n{\n\tstring s1,s2; cin >> s1 >> s2;\n\tauto add_part = add(A,B);\n\tauto sub_part = cmp(A,B) ? sub(A,B) : sub(B,A);\n\tauto res = mul(add_part,sub_part);\n\tif(!cmp(A,B) && !(res.size() == 1 && res[0] == 0)) cout << '-';\n}` },
+            { id: "pf1", cat: "基础算法", name: "一维前缀和", code: `// 一维前缀和\nfor(int i=1;i<=n;i++) q[i] += q[i-1];` },
+            { id: "pf2", cat: "基础算法", name: "二维前缀和", code: `// 二极前缀和\ns[i][j] = s[i-1][j] + s[i][j-1] - s[i-1][j-1] + a[i][j];` },
+            { id: "df1", cat: "基础算法", name: "一维差分", code: `// 一维差分\nb[l] += c; b[r + 1] -= c;` },
+            { id: "df2", cat: "基础算法", name: "二维差分", code: `// 二维差分公式插入\nvoid insert(int x1,int y1,int x2,int y2,int c) {\n\tb[x1][y1] += c; b[x2 + 1][y2 + 1] += c;\n\tb[x1][y2 + 1] -= c; b[x2 + 1][y1] -= c;\n}` },
+            { id: "tp1", cat: "基础算法", name: "双指针(最长连续不重复子序列)", code: `while(s[a[i]] > 1) { s[a[j]]--; j++; }` },
+            { id: "tp2", cat: "基础算法", name: "双指针(数组元素目标和找下标)", code: `while(j >= 0 && a[i] + b[j] > x) j--;` },
+            { id: "tp3", cat: "基础算法", name: "双指针(判断子序列)", code: `while(i < n && j < m) { if(a[i] == b[j]) i++; j++; }` },
+            { id: "tp4", cat: "基础算法", name: "双指针(区间合并)", code: `if(ed < seg.first) { res.push_back({st,ed}); st=seg.first; }` },
+            { id: "lowbit", cat: "基础算法", name: "lowbit运算", code: `while(x) x -= x & -x, res++;` },
+            { id: "lsh", cat: "基础算法", name: "离散化(坐标去重映射)", code: `// 离散化映射分治查找\nint find(int x) {\n\tint l = -1,r = alls.size();\n\twhile(l + 1 != r) { int mid = l + r >> 1; if(alls[mid] < x) l = mid; else r = mid; }\n\treturn r + 1;\n}` },
+            { id: "ll1", cat: "数据结构", name: "单链表(数组模拟)", code: `void add_to_head(int x) { e[idx] = x; ne[idx] = head; head = idx++; }` },
+            { id: "stk1", cat: "数据结构", name: "单调栈", code: `while(tt && stk[tt] >= x) tt --;\nif(tt) cout << stk[tt] << ' '; else cout << -1 << ' ';` },
+            { id: "stk_que", cat: "数据结构", name: "单调栈理论分析", code: `// 弹出所有递增破坏项\nwhile (tt != -1 && a[q[tt]] >= a[i]) tt--;` },
+            { id: "window", cat: "数据结构", name: "单调队列(滑动窗口)", code: `if(hh <= tt && i - k + 1 > q[hh]) hh++;\nwhile(hh <= tt && a[q[tt]] >= a[i]) tt--;` },
+            { id: "uf1", cat: "数据结构", name: "并查集(合并集合)", code: `int find(int x) { if(p[x] != x) p[x] = find(p[x]); return p[x]; }` },
+            { id: "uf2", cat: "数据结构", name: "并查集(连通块)", code: `s[find(b)] += s[find(a)]; p[find(a)] = find(b);` },
+            { id: "uf3", cat: "数据结构", name: "并查集(食物链)", code: `// 复杂带权距离关系变模运算\nd[x] += d[p[x]]; p[x] = t;` },
+            { id: "heap", cat: "数据结构", name: "堆排序", code: `// 完全二叉树向下调整\nvoid down(int u) {\n\tint t = u;\n\tif(u * 2 <= sz && h[u * 2] < h[t]) t = u * 2;\n\tif(u * 2 + 1 <= sz && h[u * 2 + 1] < h[t]) t = u * 2 + 1;\n\tif(u != t) { swap(h[u], h[t]); down(t); }\n}` },
+            { id: "hash1", cat: "数据结构", name: "哈希表(拉链法)", code: `int k = (x % N + N) % N; e[idx] = x; ne[idx] = h[k]; h[k] = idx ++;` },
+            { id: "hash2", cat: "数据结构", name: "哈希表(开放寻址法)", code: `while(h[k] != null && h[k] != x) { k ++; if(k == N) k = 0; }` },
+            { id: "dfs", cat: "数论与搜索", name: "深搜(排列组合)", code: `path[u] = i; st[i] = 1; dfs(u + 1); path[u] = 0; st[i] = 0;` },
+            { id: "prime", cat: "数论与搜索", name: "质数筛", code: `if(prime[i]) { for(int j=i*i;j<=n;j+=i) prime[j] = false; }` },
+            { id: "qpow", cat: "数论与搜索", name: "快速幂", code: `while(b > 0) { if(b & 1) res = res * a % mod; a = a * a % mod; b >>= 1; }` },
+            { id: "gcd", cat: "数论与搜索", name: "GCD和LCM", code: `int gcd(int a,int b) { return b == 0 ? a : gcd(b,a % b); }` },
+            { id: "comb1", cat: "组合数学", name: "组合数1(杨辉三角)", code: `q[i][j] = q[i-1][j] + q[i - 1][j - 1];` },
+            { id: "comb2", cat: "组合数学", name: "组合数2(逆元运算)", code: `cout << (LL) fact[a] * infact[a - b] % mod * infact[b] % mod;` },
+            { id: "comb3", cat: "组合数学", name: "组合数3(Lucas定理)", code: `return C(a % p,b % p) * lucas(a / p,b / p) % p;` },
+            { id: "comb4", cat: "组合数学", name: "组合数4(勒让德定理)", code: `sum[i] = get(a,p) - get(b,p) - get(a-b,p);` }
         ];
 
         // 渲染表格
@@ -198,7 +218,7 @@
         let cardHtml = `
             <div class="acwing-card">
                 <div class="acwing-header">
-                    <h2>第一章 基础算法与数据结构 (全量 38 题)</h2>
+                    <h2>第一章 基础算法与数据结构</h2>
                 </div>
                 <table class="acwing-table">
                     <thead>
@@ -226,13 +246,27 @@
         cardHtml += `</tbody></table></div>`;
         container.innerHTML = cardHtml;
 
-        // 打开弹窗并自动刷新代码编辑器
+        // 菜单卡片切换控制
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                panels.forEach(p => p.classList.remove('active'));
+                document.getElementById(item.getAttribute('data-target')).classList.add('active');
+            });
+        });
+
+        // 打开弹窗
         function openOJ(id) {
             currentProb = allProblems.find(p => p.id === id);
             if(!currentProb) return;
             
             document.getElementById('modal-title').innerText = currentProb.name;
             document.getElementById('oj-modal').style.display = "flex";
+            
+            // 每次打开题目重置按钮状态
+            document.getElementById('sol-btn').style.display = "block";
+            document.getElementById('back-btn').style.display = "none";
             
             setTimeout(() => {
                 editor.setValue(""); 
@@ -245,14 +279,33 @@
             document.getElementById('oj-modal').style.display = "none";
         }
 
-        // 显示真题答案
-        function showSolution() {
+        // 点击【查看题解】切换逻辑
+        function toggleSolution() {
             if(!currentProb) return;
+            // 保存用户现有的草稿
+            userDraft = editor.getValue();
+            // 写入正确答案并高亮
             editor.setValue(currentProb.code);
             editor.refresh();
+            
+            // 隐藏查看题解，展露返回继续编辑
+            document.getElementById('sol-btn').style.display = "none";
+            document.getElementById('back-btn').style.display = "block";
         }
 
-        // 提交代码弹窗提示
+        // 点击【返回继续编辑】
+        function backToEdit() {
+            // 恢复之前存下来的用户草稿
+            editor.setValue(userDraft);
+            editor.refresh();
+            editor.focus();
+            
+            // 按钮状态回切
+            document.getElementById('sol-btn').style.display = "block";
+            document.getElementById('back-btn').style.display = "none";
+        }
+
+        // 提交代码弹出提示
         function submitCode() {
             const toast = document.getElementById('oj-toast');
             toast.style.display = "block";
