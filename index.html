@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zcoder-yyf 的技术博客 & OJ</title>
+    <title>Zcoder-yyf 的技术博客 & OJ 终极版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,12 +13,12 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             display: flex; 
             color: #333; 
-            background: linear-gradient(rgba(244, 245, 247, 0.85), rgba(244, 245, 247, 0.85)), 
+            background: linear-gradient(rgba(244, 245, 247, 0.82), rgba(244, 245, 247, 0.82)), 
                         url('https://api.ixiaowai.cn/api/api.php') no-repeat center center fixed;
             background-size: cover;
         }
         
-        /* 侧边栏：采用半透明磨砂玻璃，高逼格不遮挡背景 */
+        /* 侧边栏：半透明磨砂玻璃，高逼格不遮挡背景 */
         .sidebar { 
             width: 260px; 
             height: 100vh; 
@@ -38,59 +38,80 @@
         .menu-item { padding: 12px; color: #cbd5e1; cursor: pointer; border-radius: 6px; margin-bottom: 5px; list-style: none; transition: 0.2s; font-size: 15px; }
         .menu-item:hover, .menu-item.active { background: #1f6feb; color: #fff; }
 
-        /* 内容区面板：白色卡片带微微透明，透出背景的同时确保文字清晰 */
+        /* 内容区面板：白色卡片带微微透明 */
         .main-content { margin-left: 260px; flex: 1; padding: 40px; max-width: 1200px; z-index: 1; }
         .page-panel { display: none; }
         .page-panel.active { display: block; }
         
-        .waiting-box { background: rgba(255, 255, 255, 0.9); padding: 30px; border-radius: 8px; border-left: 5px solid #eab308; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .waiting-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 8px; border-left: 5px solid #eab308; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
         /* AcWing 表格卡片 */
-        .acwing-card { background: rgba(255, 255, 255, 0.93); border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 30px; }
+        .acwing-card { background: rgba(255, 255, 255, 0.95); border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 30px; }
         .acwing-header { background: #fafafa; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .acwing-header h2 { font-size: 18px; color: #1f2328; font-weight: 600; }
         .acwing-table { width: 100%; border-collapse: collapse; background: transparent; }
         .acwing-table th { background: #f6f8fa; text-align: left; padding: 12px 20px; font-size: 14px; color: #656d76; border-bottom: 1px solid #d0d7de; }
         .acwing-table td { padding: 12px 20px; font-size: 14px; color: #24292f; border-bottom: 1px solid #d0d7de; }
-        .acwing-table tr:hover { background: rgba(31, 111, 235, 0.04); }
+        .acwing-table tr:hover { background: rgba(31, 111, 235, 0.05); }
         .title-link { color: #0969da; text-decoration: none; font-weight: 500; cursor: pointer; }
         .title-link:hover { text-decoration: underline; }
         
-        /* OJ 弹出窗（不透明暗黑，确保答题视线专注） */
+        /* ================= OJ 左右分屏对照布局 ================= */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: #0d1117; width: 95%; max-width: 1300px; height: 92vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.15s ease-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-box { background: #fff; width: 95%; max-width: 1400px; height: 92vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.15s ease-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-header { background: #161b22; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; }
-        .modal-body { flex: 1; display: flex; padding: 0; overflow: hidden; background: #0d1117; }
         
-        .code-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+        /* 核心修改：左右分屏 */
+        .modal-body { flex: 1; display: flex; overflow: hidden; background: #ffffff; }
         
-        /* AcWing 专属蓝黑编辑器字体与配色方案 (18px 大字体) */
-        .cm-s-acwing-dark.CodeMirror { background: #0d1117; color: #c9d1d9; font-size: 18px !important; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.6; height: 100%; }
-        .cm-s-acwing-dark .CodeMirror-gutters { background: #0d1117; border-right: 1px solid #30363d; }
-        .cm-s-acwing-dark .CodeMirror-linenumber { color: #484f58; }
-        .cm-s-acwing-dark .cm-keyword { color: #79c0ff; font-weight: bold; } 
-        .cm-s-acwing-dark .cm-operator { color: #c9d1d9; }
-        .cm-s-acwing-dark .cm-variable, .cm-s-acwing-dark .cm-variable-2, .cm-s-acwing-dark .cm-variable-3 { color: #c9d1d9; }
-        .cm-s-acwing-dark .cm-def { color: #d2a8ff; }
-        .cm-s-acwing-dark .cm-type { color: #ff7b72; }
-        .cm-s-acwing-dark .cm-string { color: #a5d6ff; }
-        .cm-s-acwing-dark .cm-number { color: #79c0ff; }
-        .cm-s-acwing-dark .cm-comment { color: #8b949e; font-style: italic; }
-        .cm-s-acwing-dark .cm-meta { color: #ff7b72; }
-        .cm-s-acwing-dark .CodeMirror-cursor { border-left: 2px solid #58a6ff; }
-        .cm-s-acwing-dark .CodeMirror-selected { background: #264f78; }
+        /* 左半区：题目 或 题解 */
+        .left-panel { flex: 1; border-right: 2px solid #e2e8f0; display: flex; flex-direction: column; background: #fafafa; overflow: hidden; }
+        .problem-desc { padding: 25px; overflow-y: auto; font-size: 15px; line-height: 1.6; color: #24292f; height: 100%; }
+        .solution-box { display: none; flex-direction: column; height: 100%; }
+        .solution-header { padding: 12px 20px; background: #f0f3f6; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0969da; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 右半区：用户编辑区 */
+        .right-panel { flex: 1; display: flex; flex-direction: column; position: relative; background: #ffffff; }
+        .editor-header { padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #24292f; font-size: 14px; }
+        
+        .code-area { flex: 1; position: relative; }
+        
+        /* ================= 专属白底 蓝黑红 极简高亮主题 ================= */
+        /* 强制背景纯白，文字纯黑，字号18px */
+        .cm-s-acwing-custom.CodeMirror { background: #ffffff; color: #000000; font-size: 18px !important; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.6; height: 100%; }
+        .cm-s-acwing-custom .CodeMirror-gutters { background: #f6f8fa; border-right: 1px solid #e2e8f0; }
+        .cm-s-acwing-custom .CodeMirror-linenumber { color: #656d76; }
+        
+        /* 蓝色：关键字、类型、宏定义 */
+        .cm-s-acwing-custom .cm-keyword { color: #0000ff; font-weight: bold; } 
+        .cm-s-acwing-custom .cm-type { color: #0000ff; font-weight: bold; } 
+        .cm-s-acwing-custom .cm-meta { color: #0000ff; font-weight: bold; } /* #include 变蓝 */
+        .cm-s-acwing-custom .cm-builtin { color: #0000ff; font-weight: bold; }
+        
+        /* 红色：尖括号内的内容 (C++的<iostream>被解析为string) */
+        .cm-s-acwing-custom .cm-string { color: #ff0000; } 
+        .cm-s-acwing-custom .cm-string-2 { color: #ff0000; }
+        
+        /* 纯黑色：变量、数字、注释、符号，绝对不花哨 */
+        .cm-s-acwing-custom .cm-operator,
+        .cm-s-acwing-custom .cm-variable,
+        .cm-s-acwing-custom .cm-variable-2,
+        .cm-s-acwing-custom .cm-variable-3,
+        .cm-s-acwing-custom .cm-def,
+        .cm-s-acwing-custom .cm-number,
+        .cm-s-acwing-custom .cm-comment,
+        .cm-s-acwing-custom .cm-property { color: #000000; }
+        
+        .cm-s-acwing-custom .CodeMirror-cursor { border-left: 2px solid #000000; }
+        .cm-s-acwing-custom .CodeMirror-selected { background: #b3d4fc; } /* 选中文本为浅蓝 */
 
         /* 底部操作栏 */
-        .action-bar { display: flex; padding: 12px 20px; background: #161b22; border-top: 1px solid #30363d; gap: 15px; }
-        .btn { border: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; flex: 1; }
+        .action-bar { display: flex; padding: 15px 20px; background: #fafafa; border-top: 1px solid #e2e8f0; gap: 15px; }
+        .btn { border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; flex: 1; }
         .btn-submit { background: #238636; color: #fff; }
         .btn-submit:hover { background: #2ea043; }
-        .btn-solution { background: #1f6feb; color: #fff; }
+        .btn-solution { background: #0969da; color: #fff; }
         .btn-solution:hover { background: #388bfd; }
-        
-        /* 新增：返回编辑按键（默认隐藏） */
-        .btn-back { background: #6e7681; color: #fff; display: none; } 
-        .btn-back:hover { background: #8b949e; }
 
         /* 后端不会提示框 */
         .toast { display: none; position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #1f6feb; color: #fff; padding: 15px 40px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 2000; font-size: 18px; text-align: center; }
@@ -134,15 +155,31 @@
                 <span style="cursor:pointer; font-size:26px; font-weight:bold; color:#8b949e;" onclick="closeOJ()">×</span>
             </div>
             <div class="modal-body">
-                <div class="code-area">
-                    <textarea id="editor-input"></textarea>
+                
+                <div class="left-panel">
+                    <div id="modal-desc" class="problem-desc"></div>
+                    
+                    <div id="solution-box" class="solution-box">
+                        <div class="solution-header">
+                            <span>✅ 标程题解 (对照区)</span>
+                        </div>
+                        <div class="code-area">
+                            <textarea id="solution-input"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-panel">
+                    <div class="editor-header">💻 代码编辑区 (C++11)</div>
+                    <div class="code-area">
+                        <textarea id="editor-input"></textarea>
+                    </div>
                     <div class="action-bar">
-                        <button class="btn btn-solution" id="sol-btn" onclick="toggleSolution()">查看题解</button>
-                        <button class="btn btn-back" id="back-btn" onclick="backToEdit()">返回继续编辑</button>
-                        
+                        <button class="btn btn-solution" id="sol-btn" onclick="toggleSolution()">查看题解 (对照答案)</button>
                         <button class="btn btn-submit" onclick="submitCode()">提交运行</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -152,19 +189,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/closebrackets.min.js"></script>
 
     <script>
-        // 修复关键 Bug：获取所有的选项卡与面板变量（之前漏了这一行导致 JS 报错卡死）
+        // 确保选项卡和面板被正确获取
         const menuItems = document.querySelectorAll('.menu-item');
         const panels = document.querySelectorAll('.page-panel');
 
-        // 初始化专业代码高亮编辑器
+        // 右侧：用户代码编辑器配置
         let editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
             mode: "text/x-c++src",
-            theme: "acwing-dark", // 纯正蓝黑配色
+            theme: "acwing-custom", // 专属克制主题
             lineNumbers: true,
             indentUnit: 4,
             tabSize: 4,
             lineWrapping: true,
-            autoCloseBrackets: true, // 开启括号自动对齐补全功能
+            autoCloseBrackets: true, // 开启大括号、小括号自动补全！
             extraKeys: {
                 "Tab": function(cm) {
                     var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
@@ -173,11 +210,17 @@
             }
         });
 
-        // 缓存用户手写的草稿代码
-        let userDraft = "";
+        // 左侧：题解只读代码编辑器配置
+        let solutionEditor = CodeMirror.fromTextArea(document.getElementById("solution-input"), {
+            mode: "text/x-c++src",
+            theme: "acwing-custom",
+            lineNumbers: true,
+            lineWrapping: true,
+            readOnly: true // 题解区不可编辑
+        });
 
         // ==========================================
-        // 💥 无情罗列：全量核心题目源码字典
+        // 全量核心题目源码字典
         // ==========================================
         const allProblems = [
             { id: "qs", cat: "基础算法", name: "快速排序", code: `// 快速排序\n#include <iostream> \nusing namespace std; \nconst int N = 1e6 + 10;\nint q[N];\nvoid quick_sort(int q[],int l,int r)\n{\n\tif(l >= r) return;\n\tint x = q[(l + r + 1) / 2],i = l - 1,j = r + 1;\n\twhile(i < j)\n\t{\n\t\tdo i++;while(q[i] < x);\n\t\tdo j--;while(q[j] > x);\n\t\t\n\t\tif(i < j) swap(q[i],q[j]);\n\t}\n\tquick_sort(q,l,i-1),quick_sort(q,i,r);\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> q[i];\n\tquick_sort(q,0,n-1);\n\tfor(int i=0;i<n;i++) cout << q[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
@@ -218,9 +261,10 @@
             { id: "comb4", cat: "组合数学", name: "组合数4(勒让德定理)", code: `sum[i] = get(a,p) - get(b,p) - get(a-b,p);` }
         ];
 
-        // 渲染表格面板
+        // 渲染首页表格
         const container = document.getElementById('acwing-list-container');
         let currentProb = null;
+        let isShowingSolution = false; // 记录左侧当前是不是在看题解
 
         let cardHtml = `
             <div class="acwing-card">
@@ -253,7 +297,7 @@
         cardHtml += `</tbody></table></div>`;
         container.innerHTML = cardHtml;
 
-        // 完美修复的菜单选项卡切换事件
+        // 菜单卡片切换事件绑定
         menuItems.forEach(item => {
             item.addEventListener('click', () => {
                 menuItems.forEach(i => i.classList.remove('active'));
@@ -263,57 +307,64 @@
             });
         });
 
-        // 开启题目面板
+        // 打开弹窗：左边默认显示题目描述，右边是白板
         function openOJ(id) {
             currentProb = allProblems.find(p => p.id === id);
             if(!currentProb) return;
             
             document.getElementById('modal-title').innerText = currentProb.name;
+            
+            // 初始化左侧状态：显示题目
+            isShowingSolution = false;
+            document.getElementById('modal-desc').style.display = "block";
+            document.getElementById('solution-box').style.display = "none";
+            document.getElementById('modal-desc').innerHTML = `<h3>${currentProb.name}</h3><br><p>请在右侧代码框内完成你的 C++ 代码编写。如果需要参考标程，请点击下方【查看题解】。</p>`;
+            
+            // 按钮重置
+            document.getElementById('sol-btn').innerText = "查看题解 (对照答案)";
+            
             document.getElementById('oj-modal').style.display = "flex";
             
-            // 每次打开新的题，重置按钮显示状态
-            document.getElementById('sol-btn').style.display = "block";
-            document.getElementById('back-btn').style.display = "none";
-            
+            // 延时重置右侧编辑器
             setTimeout(() => {
-                editor.setValue(""); // 留给用户干干净净的草稿纸
+                editor.setValue(""); 
                 editor.refresh();
                 editor.focus();
             }, 50);
         }
 
-        // 关闭面板
+        // 关闭弹窗
         function closeOJ() {
             document.getElementById('oj-modal').style.display = "none";
         }
 
-        // 💥 新增逻辑：查看题解并切换返回按钮
+        // 💥 左侧面板切换：查看题解 <-> 返回题目描述
         function toggleSolution() {
             if(!currentProb) return;
-            // 1. 保存当前手写的草稿
-            userDraft = editor.getValue();
-            // 2. 贴上正确答案
-            editor.setValue(currentProb.code);
-            editor.refresh();
             
-            // 3. 切换按钮状态：隐藏题解按钮，显示返回继续编辑
-            document.getElementById('sol-btn').style.display = "none";
-            document.getElementById('back-btn').style.display = "block";
+            isShowingSolution = !isShowingSolution;
+            
+            if(isShowingSolution) {
+                // 切换为看题解状态
+                document.getElementById('modal-desc').style.display = "none";
+                document.getElementById('solution-box').style.display = "flex";
+                
+                solutionEditor.setValue(currentProb.code);
+                setTimeout(() => solutionEditor.refresh(), 50);
+                
+                document.getElementById('sol-btn').innerText = "返回查看题目描述";
+                document.getElementById('sol-btn').style.background = "#6e7681";
+            } else {
+                // 切换回看题目状态
+                document.getElementById('modal-desc').style.display = "block";
+                document.getElementById('solution-box').style.display = "none";
+                
+                document.getElementById('sol-btn').innerText = "查看题解 (对照答案)";
+                document.getElementById('sol-btn').style.background = "#0969da";
+            }
         }
 
-        // 💥 新增逻辑：从答案切回草稿
-        function backToEdit() {
-            // 1. 恢复草稿
-            editor.setValue(userDraft);
-            editor.refresh();
-            editor.focus();
-            
-            // 2. 切换按钮状态
-            document.getElementById('sol-btn').style.display = "block";
-            document.getElementById('back-btn').style.display = "none";
-        }
-
-        // 提交代码防呆弹窗
+        // 提交代码弹窗
         function submitCode() {
             const toast = document.getElementById('oj-toast');
             toast.style.display = "block";
