@@ -18,7 +18,7 @@
             background-size: cover;
         }
         
-        /* 侧边栏：半透明磨砂玻璃，高逼格不遮挡背景 */
+        /* 侧边栏：半透明磨砂玻璃 */
         .sidebar { 
             width: 260px; 
             height: 100vh; 
@@ -38,7 +38,7 @@
         .menu-item { padding: 12px; color: #cbd5e1; cursor: pointer; border-radius: 6px; margin-bottom: 5px; list-style: none; transition: 0.2s; font-size: 15px; }
         .menu-item:hover, .menu-item.active { background: #1f6feb; color: #fff; }
 
-        /* 内容区面板：白色卡片带微微透明 */
+        /* 内容区面板 */
         .main-content { margin-left: 260px; flex: 1; padding: 40px; max-width: 1200px; z-index: 1; }
         .page-panel { display: none; }
         .page-panel.active { display: block; }
@@ -56,12 +56,11 @@
         .title-link { color: #0969da; text-decoration: none; font-weight: 500; cursor: pointer; }
         .title-link:hover { text-decoration: underline; }
         
-        /* ================= OJ 左右分屏对照布局 ================= */
+        /* OJ 左右分屏对照布局 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal-box { background: #fff; width: 95%; max-width: 1400px; height: 92vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.15s ease-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-header { background: #161b22; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; }
         
-        /* 左右分屏 */
         .modal-body { flex: 1; display: flex; overflow: hidden; background: #ffffff; }
         
         /* 左半区：题目 或 题解 */
@@ -76,8 +75,7 @@
         
         .code-area { flex: 1; position: relative; }
         
-        /* ================= 像素级复刻：专属白底 蓝黑红 极简高亮主题 ================= */
-        /* 强制背景纯白，文字纯黑，字号18px，采用截图同款标准等宽字体 */
+        /* ================= 专属白底 蓝黑红 终极高亮主题 ================= */
         .cm-s-acwing-custom.CodeMirror { 
             background: #ffffff; 
             color: #000000; 
@@ -86,22 +84,21 @@
             line-height: 1.5; 
             height: 100%; 
         }
-        /* 行号区极浅灰背景，带细边框 */
         .cm-s-acwing-custom .CodeMirror-gutters { background: #f8f9fa; border-right: 1px solid #e0e0e0; }
         .cm-s-acwing-custom .CodeMirror-linenumber { color: #888888; }
         
-        /* 蓝色：关键字、类型、宏定义、数字（去掉加粗，完全同款） */
+        /* 蓝色：关键字、类型、内建函数、数字（全部取消加粗，高度还原） */
         .cm-s-acwing-custom .cm-keyword,
         .cm-s-acwing-custom .cm-type,
-        .cm-s-acwing-custom .cm-meta,
         .cm-s-acwing-custom .cm-builtin,
         .cm-s-acwing-custom .cm-number { color: #0000ff; font-weight: normal; } 
         
-        /* 红色：尖括号内的内容 */
+        /* 核心修改：#include 这一行里，只有尖括号部分变为纯红色 */
+        .cm-s-acwing-custom .cm-meta { color: #000000; font-weight: normal; } /* 让 #include 归黑 */
         .cm-s-acwing-custom .cm-string,
-        .cm-s-acwing-custom .cm-string-2 { color: #ff0000; }
+        .cm-s-acwing-custom .cm-string-2 { color: #ff0000; font-weight: normal; } /* 让尖括号及其内容强制变红 */
         
-        /* 纯黑色：变量、符号、定义等全部归黑 */
+        /* 纯黑色：普通变量、操作符、符号等全面归黑 */
         .cm-s-acwing-custom .cm-operator,
         .cm-s-acwing-custom .cm-variable,
         .cm-s-acwing-custom .cm-variable-2,
@@ -200,7 +197,7 @@
         const menuItems = document.querySelectorAll('.menu-item');
         const panels = document.querySelectorAll('.page-panel');
 
-        // 右侧：用户代码编辑器配置
+        // 右侧编辑器
         let editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
             mode: "text/x-c++src",
             theme: "acwing-custom", 
@@ -208,7 +205,7 @@
             indentUnit: 4,
             tabSize: 4,
             lineWrapping: true,
-            autoCloseBrackets: true, // 开启大括号、小括号自动补全！
+            autoCloseBrackets: true,
             extraKeys: {
                 "Tab": function(cm) {
                     var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
@@ -217,16 +214,16 @@
             }
         });
 
-        // 左侧：题解只读代码编辑器配置
+        // 左侧题解区
         let solutionEditor = CodeMirror.fromTextArea(document.getElementById("solution-input"), {
             mode: "text/x-c++src",
             theme: "acwing-custom",
             lineNumbers: true,
             lineWrapping: true,
-            readOnly: true // 题解区不可编辑
+            readOnly: true
         });
 
-        // 全量核心题目源码字典
+        // 38门核心题目数据字典
         const allProblems = [
             { id: "qs", cat: "基础算法", name: "快速排序", code: `// 快速排序\n#include <iostream> \nusing namespace std; \nconst int N = 1e6 + 10;\nint q[N];\nvoid quick_sort(int q[],int l,int r)\n{\n\tif(l >= r) return;\n\tint x = q[(l + r + 1) / 2],i = l - 1,j = r + 1;\n\twhile(i < j)\n\t{\n\t\tdo i++;while(q[i] < x);\n\t\tdo j--;while(q[j] > x);\n\t\t\n\t\tif(i < j) swap(q[i],q[j]);\n\t}\n\tquick_sort(q,l,i-1),quick_sort(q,i,r);\n}\nvoid solve()\n{\n\tint n;\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> q[i];\n\tquick_sort(q,0,n-1);\n\tfor(int i=0;i<n;i++) cout << q[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
             { id: "ms", cat: "基础算法", name: "归并排序", code: `// 归并排序\n#include <iostream> \nusing namespace std;\nconst int N = 1e6 + 10;\nint q[N],temp[N];\nvoid merge_sort(int q[],int l,int r)\n{\n\tif(l >= r) return;\n\tint mid = l + r >> 1;\n\tmerge_sort(q,l,mid-1),merge_sort(q,mid,r);\n\t\n\tint k = 0,i = l,j = mid + 1;\n\twhile(i <= mid && j <= r)\n\t{\n\t\tif(q[i] <= q[j]) temp[k++] = q[i++];\n\t\telse temp[k++] = q[j++];\n\t}\n\twhile(i <= mid) temp[k ++] = q[i++];\n\twhile(j <= r) temp[k++] = q[j++];\n\t\n\tfor(int i=l,j = 0;i <= r;i++) q[i] = temp[j];\n}\nvoid solve()\n{\n\tint n ;\n\tcin >> n;\n\tfor(int i=0;i<n;i++) cin >> q[i];\n\tmerge_sort(q,0,n-1);\n\tfor(int i=0;i<n;i++) cout << q[i] << ' ';\n}\nint main()\n{\n\tios::sync_with_stdio(0),cin.tie(0),cout.tie(0);\n\tint _;_ = 1;\n\twhile(_--) solve();\n\treturn 0;\n}` },
@@ -266,7 +263,7 @@
             { id: "comb4", cat: "组合数学", name: "组合数4(勒让德定理)", code: `sum[i] = get(a,p) - get(b,p) - get(a-b,p);` }
         ];
 
-        // 渲染首页表格
+        // 首页表格渲染
         const container = document.getElementById('acwing-list-container');
         let currentProb = null;
         let isShowingSolution = false; 
@@ -302,7 +299,7 @@
         cardHtml += `</tbody></table></div>`;
         container.innerHTML = cardHtml;
 
-        // 菜单卡片切换事件绑定
+        // 绑定选项卡点击事件
         menuItems.forEach(item => {
             item.addEventListener('click', () => {
                 menuItems.forEach(i => i.classList.remove('active'));
@@ -312,7 +309,6 @@
             });
         });
 
-        // 打开弹窗
         function openOJ(id) {
             currentProb = allProblems.find(p => p.id === id);
             if(!currentProb) return;
@@ -336,12 +332,10 @@
             }, 50);
         }
 
-        // 关闭弹窗
         function closeOJ() {
             document.getElementById('oj-modal').style.display = "none";
         }
 
-        // 切换左侧题解
         function toggleSolution() {
             if(!currentProb) return;
             
@@ -365,7 +359,6 @@
             }
         }
 
-        // 提交代码弹窗
         function submitCode() {
             const toast = document.getElementById('oj-toast');
             toast.style.display = "block";
